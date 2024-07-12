@@ -1,0 +1,21 @@
+<% cache blog do %>
+  <figure class="library__book <%= "theme--#{blog&.theme}" unless blog.cover.attached? %>">
+    <div class="flex flex-column gap-half">
+      <div class="flex-inline position-relative center">
+        <% if blog.cover.attached? %>
+          <%= image_tag blog.cover, alt: "Blog cover", class: "book__cover" %>
+        <% else %>
+          <span class="book__cover-wrapper">
+            <%= image_tag "empty-cover.png", alt: "Blog cover", class: "book__cover margin-block-none center" %>
+            <span class="book__title overflow-line-clamp pad txt-align-start txt-tight-lines" style="--lines: 6" aria-hidden="true"><%= blog.title %></span>
+          </span>
+        <% end %>
+        <%= turbo_frame_tag dom_id(blog, :bookmark), src: blog_bookmark_path(blog), target: "_top" %>
+      </div>
+      <h2 class="margin-none flex flex-column txt-normal txt-tight-lines txt-medium--responsive">
+        <strong><%= blog.title %></strong>
+        <span class="overflow-line-clamp"><%= blog.author %></span>
+      </h2>
+    </div>
+  </figure>
+<% end %>

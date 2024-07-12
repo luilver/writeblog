@@ -1,0 +1,32 @@
+<% content_for(:title) { "Library | Writeblog" } %>
+<% @layout_class = "blogs" %>
+
+<% content_for :header do %>
+  <nav>
+    <span class="btn btn--placeholder" aria-hidden="true"></span>
+
+    <a href="https://github.com/luilver/writeblog" class="product__wordmark btn btn--plain txt-large center" target="_blank">
+      <%= image_tag "writebook-icon.svg", aria: { hidden: true }, size: 24 %>
+      <span>Writeblog</span>
+    </a>
+
+    <% if Current.user %>
+      <%= link_to users_path, class: "btn" do %>
+        <%= image_tag "settings.svg", aria: { hidden: true }, size: 24 %>
+        <span class="for-screen-reader">Manage people and settings</span>
+      <% end %>
+    <% else %>
+      <%= link_to new_session_path, class: "btn" do %>
+        <%= image_tag "login-keys.svg", aria: { hidden: true }, size: 24 %>
+        <span class="for-screen-reader">Sign in</span>
+      <% end %>
+    <% end %>
+  </nav>
+<% end %>
+
+<% cache [ @blogs, signed_in? ] do %>
+  <div class="library">
+    <%= render @blogs %>
+    <%= render "blogs/new" if signed_in? %>
+  </div>
+<% end %>
