@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  ngrok:
+    command:
+      - "start"
+      - "writeblog_http_server"
+      - "--config"
+      - "/etc/ngrok.yml"
+      - "--log"
+      - "stdout"
+    depends_on:
+      -  writeblog
+    image: ngrok/ngrok
+    ports:
+      - 4040:4040
+    restart: unless-stopped
+    volumes:
+      - ./config/ngrok.yml:/etc/ngrok.yml
+  writeblog:
+    build: .
+    container_name: writeblog
+    image: writeblog
+    oom_kill_disable: true
+    ports:
+      - 3000:3000
+    restart: always
+    tty: true
+    stdin_open: true
