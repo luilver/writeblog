@@ -5,7 +5,7 @@ source "https://rubygems.org"
 gem "rails", github: "rails/rails"
 
 # Drivers
-gem "sqlite3", "~> 1.4"
+gem "sqlite3", "~> 2.0"
 gem "redis", ">= 4.0.1"
 
 # Deployment
