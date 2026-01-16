@@ -1,6 +1,7 @@
-version: 2
-authtoken: your_auth_token_here
+version: 3
+agent:
+  authtoken: your_auth_token_here
 tunnels:
-  python_http_server:
+  writeblog_http_server:
     proto: http
-    addr: python:8000
+    addr: writeblog:3000
