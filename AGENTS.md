@@ -1,0 +1,164 @@
+# AGENTS
+## Purpose & Snapshot
+- This repository hosts Writeblog, a Rails 7.2 fork of Writebook tailored for multi-blog publishing.
+- Ruby 3.3.1 (see .ruby-version) with Bundler-managed gems and Propshaft/importmap-driven frontend assets.
+- Persistence: SQLite (storage/db/*.sqlite3) for primary data plus Redis (config/redis.conf) for caching and queues.
+- Background jobs rely on Resque/Resque-Pool and run through the Procfile workers entry.
+- Frontend stack blends Turbo, Stimulus controllers, custom ES modules, and handcrafted CSS under app/assets/stylesheets.
+- Tests live in test/ using Rails’ Minitest tooling, fixtures, and helper modules such as SessionTestHelper.
+- No .cursor/rules or Copilot instruction files exist; follow this AGENTS.md for automation guidance.
+- Keep repository secrets (credentials, ngrok tokens, API keys) out of commits; rotate anything uploaded to config/ngrok.yml.
+- Prefer the provided bin/ wrappers (bin/rails, bin/rubocop, bin/brakeman) so versions stay in sync with the lockfile.
+- Cache, asset, and markdown behavior is customized via config/initializers, so skim them when touching global concerns.
+- ApplicationController enforces Authentication, Authorization, and VersionHeaders; plan new controllers around those concerns.
+- Document any deviations inside this file so future agents inherit a single source of truth.
+## Toolchain & Setup
+- Run ./bin/setup after cloning; it installs gems, prepares DBs, and ensures bin/ stubs are current.
+- Ruby version is pinned to 3.3.1; install it (with YJIT) via asdf/rbenv to match config/initializers/enable_yjit.rb.
+- Bundler dependencies live in Gemfile/Gemfile.lock; never hand-edit the lockfile—use bundle add/update under the same Ruby.
+- Node/yarn are not required because importmap serves ES modules; rely on ./bin/importmap for pinning.
+- Use ./bin/bundle exec <cmd> only if a wrapper is missing; otherwise prefer the wrapper for deterministic flags.
+- ./bin/setup seeds storage/db/{development,test}.sqlite3 and ensures tmp/ directories exist.
+- Database settings are in config/database.yml with busy-handler retries; avoid direct SQLite pragmas unless necessary.
+- If you need Docker, run docker-compose up --build to launch the Rails app plus ngrok for remote previews.
+- The Docker image (Dockerfile) exposes port 3000; set APP_VERSION/GIT_REVISION via compose overrides or runtime env vars.
+- Application config autoloads lib except rails_ext/assets/tasks; add new extensions under lib/rails_ext for auto-require.
+- Discover rake tasks with ./bin/rake -T and place new tasks under lib/tasks/ with descriptive namespaces.
+- Clean orphaned gems via bundle clean --force after removing dependencies, then regenerate binstubs with bundle binstubs <gem> when needed.
+- When touching config/application.rb, respect config.load_defaults 7.2 and existing autoload settings.
+- After updating dependencies, run ./bin/rubocop and ./bin/rails test to catch regressions early.
+## Running & Process Control
+- For local multi-process dev, run ./bin/boot; it reads Procfile via ProcessMonitor and manages signals.
+- Procfile defines web (bundle exec thrust bin/start-app), redis (redis-server config/redis.conf), and workers (bundle exec resque-pool).
+- bin/start-app removes tmp/pids/server.pid, runs ./bin/rails db:prepare, then starts ./bin/rails server.
+- Use Foreman alternatives only if you mirror the same commands; bin/boot keeps parity with production assumptions.
+- config/redis.conf disables persistence (appendonly no; save "") and listens on 6379—start it before workers.
+- Resque pool concurrency defaults to half your cores (config/resque-pool.yml); override via env vars when load testing.
+- Production logging streams to STDOUT with tagged logging and obeys RAILS_LOG_LEVEL; replicate this locally when debugging.
+- Force SSL is enabled in production; set DISABLE_SSL=1 only for local tunnels and never commit that change.
+- Health endpoints /up, /service-worker, and /manifest are mounted for monitoring and PWA clients.
+- Use Procfile + ./bin/boot even inside containers so the same commands power Compose and other deploy targets.
+- When adding services, extend Procfile with short names so ProcessMonitor output stays legible.
+- For CLI admin needs, reuse script/admin/reset-password or script/admin/prepare-backup so production workflows match local ones.
+- Export APP_VERSION and GIT_REVISION (config/initializers/version.rb) in dev/staging to populate response headers.
+- Stop lingering rails servers before rerunning ./bin/boot to avoid port collisions on 3000.
+## Testing Strategy
+- Primary suite: ./bin/rails test runs every Minitest suite (models, controllers, mailers, channels, jobs, system stubs).
+- Run a directory with ./bin/rails test test/controllers to focus on a slice; use TESTOPTS='--seed 12345' to reproduce flaky ordering.
+- Single file: ./bin/rails test TEST=test/controllers/blogs_controller_test.rb exercises only that file.
+- Single test: ./bin/rails test test/controllers/blogs_controller_test.rb:44 targets the assertion at that line.
+- System tests live in test/system with Capybara/Selenium; run ./bin/rails test:system and ensure a JS-capable driver is installed.
+- Fixtures auto-load via fixtures :all; keep data deterministic inside test/fixtures/*.yml and reuse existing users/blogs when possible.
+- SessionTestHelper (test/test_helpers/session_test_helper.rb) provides sign_in, sign_out, and parsed_cookies helpers for integration tests.
+- Tests parallelize by default (parallelize(workers: :number_of_processors)); guard shared resources such as Redis or tmp files.
+- Integration tests should exercise named routes (blog_slug_url, leafable_slug_url) to ensure slug helpers stay correct.
+- Prefer assert_select/assert_response/assert_redirected_to for controller flows as demonstrated in BlogsControllerTest.
+- When stubbing background jobs, switch ActiveJob::Base.queue_adapter or use perform_enqueued_jobs blocks per test.
+- Attachments should reference fixtures/files directories and rely on ActiveStorage test disk service.
+- Failing tests print randomized seeds; rerun with the displayed --seed to confirm fix stability.
+- Require new helper modules via test/test_helper.rb so parallel workers share the same includes.
+- Use ./bin/rails test:system:detached only when debugging; it opens browsers that block CI workflows.
+## Linting & Quality Gates
+- Ruby style is enforced via ./bin/rubocop, which loads rubocop-rails-omakase defaults plus .rubocop.yml overrides.
+- Add project-specific cops cautiously and document why inside .rubocop.yml to avoid global slowdowns.
+- ./bin/brakeman --ensure-latest scans for security issues; treat warnings as blockers unless you justify a false positive.
+- Run ./bin/rails zeitwerk:check whenever you rename/move constants to keep autoloading healthy.
+- Accessibility and UI linting is manual; review base.css patterns and ensure focus states remain intact.
+- Before deploying, run bundle exec rake assets:precompile to confirm propshaft digests resolve.
+- Importmap pins should be managed with ./bin/importmap pin <package>; commit config/importmap.rb changes.
+- Verify MarkdownRenderer via ./bin/rails runner "MarkdownRenderer.build" if you touch lib/markdown_renderer.rb or ActionText configs.
+- Keep IDE static analysis aligned with Ruby 3.3.1 to match rubocop’s target version.
+- Security scanning for dependencies currently relies on Renovate/Dependabot; mention any bundle audit findings in PRs.
+- After editing CSS, run ./bin/rails assets:clean before precompiling to avoid stale digests.
+- Record new conventions in AGENTS.md so future lint expectations stay explicit.
+## Data, Background Jobs, External Services
+- Run ./bin/rails db:prepare to create, migrate, and seed SQLite databases per environment.
+- For ad-hoc resets, ./bin/rails db:drop db:create db:migrate cleans storage/db/*.sqlite3 (delete files manually if needed).
+- Generate schema changes via ./bin/rails generate migration ... so schema.rb remains canonical.
+- ActiveStorage uses the :local service (storage/files or tmp/storage in test); purge attachments via dependent: :purge_later.
+- Markdown content flows through ActionText::HasMarkdown (lib/rails_ext/action_text_has_markdown.rb); leverage safe_markdown_attribute helpers.
+- Background jobs use ActiveJob + Resque (config/environments/production.rb); queue names should stay snake_case.
+- Workers run under bundle exec resque-pool with FORK_PER_JOB=false and INTERVAL=0.1; adjust via env vars when benchmarking.
+- Redis powers fragment caching (blogs/index cache [@blogs, signed_in?]); flush redis-cli FLUSHALL before benchmarks.
+- config/resque-pool.yml sets concurrency to ceil(Concurrent.processor_count * 0.5); override per env if memory permits.
+- Version headers (X-Version, X-Rev) read from env; set APP_VERSION/GIT_REVISION inside deploy jobs for traceability.
+- Keep Redis config/redis.conf in sync with production defaults; persistence is off locally for speed.
+- script/admin/reset-password loads config/environment; prefer it for manual account recovery instead of ad-hoc console scripts.
+- QR code rendering and image uploads depend on ActiveStorage + image_processing; ensure libvips/ImageMagick exist in deployed images.
+- Wrap external HTTP APIs in lib/ clients and enqueue background jobs when calls are slow.
+- Seed data (db/seeds.rb) should remain idempotent; document any reliance on seeded accounts.
+## Frontend & Assets
+- app/javascript/application.js imports Turbo, custom actions, Stimulus controllers, and house.min.js as the entrypoint.
+- Stimulus controllers live in app/javascript/controllers; export default classes extending Controller and register via controllers/index.js.
+- app/javascript/actions exposes standalone handlers (scroll_into_view, etc.) referenced via data-action attributes.
+- Helpers inside app/javascript/helpers host pure functions (cookie_helpers, form_helpers) to avoid duplication across controllers.
+- No bundler/webpack is present; configure new dependencies through config/importmap.rb and ./bin/importmap pin.
+- CSS lives in app/assets/stylesheets with focused files (_reset, base, layout, buttons, etc.); Propshaft fingerprints assets automatically.
+- Use custom properties defined in colors.css/base.css rather than embedding literals; theme-specific overrides belong in domain files (e.g., blogs.css).
+- Class naming follows BEM-ish patterns (btn, btn--plain, library__item) and data attributes power JS hooks; avoid inline styles.
+- ERB views leverage fragment caching (cache [@blogs, signed_in?]); wrap caches around arrays of cacheable objects.
+- Image assets reside in app/assets/images; use image_tag with aria-hidden and accessible labels for icons.
+- Turbo/Stimulus favor progressive enhancement; controllers must tolerate repeated connect/disconnect cycles.
+- turbo-frame elements default to display: contents (base.css); keep markup accessible when using Turbo Frames.
+- Markdown rendering uses MarkdownRenderer (lib/markdown_renderer.rb) via config/initializers/markdown.rb; keep headings unique with unique_id.
+- Stimulus value/target naming should follow fooValue/fooTarget patterns; declare static targets/values near the top of the class.
+- Animations belong in animation.css; reuse timing tokens instead of hardcoding transitions per component.
+## Ruby & Rails Code Style
+- Follow Rails conventions: controllers inherit ApplicationController, declare before_action filters up top, and keep actions lean.
+- Use strong parameters with params.require/permit; handle toggles via explicit helpers as in BlogsController#update_accesses.
+- Prefer scopes and enums for query logic (scope :ordered -> { order(:title) }, enum :theme, %w[...].index_by(&:itself) default: :blue).
+- Keep model/service methods transactional when touching multiple tables (Blog#press wraps create!).
+- Concerns should extend ActiveSupport::Concern; place private helpers under a private block indented two spaces.
+- Authentication flows must go through Authentication/SessionLookup helpers so cookies and Current.user stay consistent.
+- Authorization helpers respond with head :forbidden or :not_found, matching Authorization concern patterns.
+- Always use route helpers for slugs (blog_slug_url, leafable_slug_url) and define new direct routes following config/routes.rb.
+- Favor guard clauses and early returns (ensure_index_is_not_empty) instead of nested conditionals for clarity.
+- Render collections with render @collection and wrap caches in stable key arrays (cache [@blogs, signed_in?]).
+- Treat Current.user as nullable; rely on signed_in? before dereferencing.
+- Keep rescue blocks narrow and stick to StandardError descendants; log actionable context only.
+- Enqueue ActiveJob jobs with identifiers and reload records inside perform to keep deserialization deterministic.
+- Chaining helpers like .then/tap is encouraged for short transformations (MarkdownRenderer#header) but keep them multiline when complex.
+- Prefer double quotes and Ruby 3 keyword arguments; align hashes only when it aids readability.
+- Keep private/protected sections at the bottom of classes; indent method bodies two spaces even inside private blocks.
+- Reserve monkey patches for lib/rails_ext and document intent before requiring them via config/initializers/extensions.rb.
+- Run ./bin/rubocop after generators (config.generators.apply_rubocop_autocorrect_after_generate!) and mention when rails dev:cache affects behavior.
+- Keep environment-specific config minimal; shared logic belongs in initializers like version.rb or markdown.rb.
+## JavaScript & CSS Style
+- Use modern ES syntax (const/let, classes, optional chaining) supported by modern browsers; no transpilation occurs.
+- Stimulus controllers export default classes extending Controller; declare static values/targets at the top for clarity.
+- Keep connect/disconnect methods idempotent and guard against missing DOM nodes as seen in autoselect_controller.js.
+- Place helper getters/setters near the bottom of controllers to keep lifecycle methods prominent.
+- Register new controllers in app/javascript/controllers/index.js so Stimulus loads them automatically.
+- Global actions (app/javascript/actions) should export named functions, then be imported via actions/index.js for reuse.
+- Do not introduce bundlers; rely on importmap to load third-party packages or local files via pin_all_from directories.
+- CSS files are plain; layer selectors logically (typography, layout, components) and keep files reasonably scoped.
+- Use CSS custom properties from base.css/colors.css for hues, spacing, and fonts instead of hardcoding values.
+- Buttons/components follow BEM-inspired naming (btn, btn--plain, library__card); keep modifiers additive.
+- Animations belong in animation.css and should share timing variables instead of inline transition definitions.
+- Media queries follow the patterns in base.css (@media (any-hover: hover), etc.) and should sit near the selectors they modify.
+- Comment niche tweaks (e.g., scrollbar styles) so future readers know the rationale.
+- Typography helpers live in text.css/utilities.css; reuse them instead of redefining font stacks.
+- Prefer Turbo Streams for DOM updates before writing bespoke JS mutations.
+- Add icons/images under app/assets/images and reference them via image_tag with aria-hidden plus sr-only text.
+- Validate forms progressively: HTML constraints first, Stimulus enhancements second.
+- Keep CSS and JS files ASCII-only unless the file already contains non-ASCII characters.
+## Error Handling, Security, Observability
+- Authentication concern requires login by default; expose public endpoints via allow_unauthenticated_access/require_unauthenticated_access as needed.
+- protect_from_forgery runs unless authenticated_by.bot_key?; use the same helpers for any API-style endpoints to prevent CSRF gaps.
+- Authorization modules (app/models/concerns/authorization.rb, ensure_editable, etc.) should reply with head :forbidden or :not_found.
+- ApplicationController calls allow_browser versions: :modern, so new features should assume modern Web APIs (webp, CSS :has, Web Push).
+- Extend config/initializers/filter_parameter_logging.rb when adding secrets so logs never capture credentials.
+- VersionHeaders sets X-Version/X-Rev from APP_VERSION and GIT_REVISION; export them in CI/CD and docker-compose.
+- Production logging writes tagged lines to STDOUT; avoid stray puts and rely on Rails.logger with request_id tags.
+- SSL is forced unless DISABLE_SSL is set; only disable inside local tunnels and document the reason.
+- SQLite busy handler (config/initializers/sqlite3.rb) retries writes with incremental backoff; keep transactions short.
+- ActionText markdown uploads live under /u/*slug; sanitize via MarkdownRenderer and avoid raw HTML injection.
+- Redis backs cache_store; persistence is disabled locally, so redis-cli FLUSHALL will drop sessions—warn teammates before doing so.
+- config/initializers/enable_yjit turns on Ruby YJIT; ensure hosts have enough memory before layering more flags.
+- Permissions-Policy initializer is commented; define explicit policies before shipping features that need sensors or payments.
+- Treat config/ngrok.yml authtoken as secret; prefer env overrides for real deployments.
+- Use head :not_found when hiding unauthorized records (BlogsController#show) to avoid leaking object existence.
+- /up stays lightweight for probes; avoid DB/cache calls unless monitoring requires them.
+- Instrument expensive code via ActiveSupport::Notifications and honor log_tags [:request_id] for traceability.
+- Session cookies live in cookies.signed.permanent[:session_token] (same_site: :lax); call reset_authentication whenever sessions are revoked.
+- Update AGENTS.md whenever security posture, headers, or env vars change so future agents stay aligned.
