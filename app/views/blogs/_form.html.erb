@@ -1,4 +1,4 @@
-<%= form_with model: blog, id: "book-editor" do |form| %>
+<%= form_with model: blog, id: "blog-editor" do |form| %>
   <%= tag.div class:"book__form flex align-center gap full-width #{"theme--#{blog&.theme}" unless blog.cover.attached? }", style:"--input-padding: 0.5rem 1rem; --input-border-radius: 0.5rem" do %>
     <div class="flex gap-half">
       <fieldset class="flex flex-column unpad margin-block-end borderless justify-space-between">
