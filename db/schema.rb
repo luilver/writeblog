@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_06_25_224312) do
+ActiveRecord::Schema[8.0].define(version: 2024_06_26_000001) do
   create_table "accesses", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "blog_id", null: false
@@ -81,6 +81,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_06_25_224312) do
     t.boolean "everyone_access", default: true, null: false
     t.string "theme", default: "blue", null: false
     t.index ["published"], name: "index_blogs_on_published"
+    t.index ["slug"], name: "index_blogs_on_slug", unique: true
   end
 
   create_table "edits", force: :cascade do |t|
@@ -103,6 +104,8 @@ ActiveRecord::Schema[8.0].define(version: 2024_06_25_224312) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "title", null: false
+    t.string "slug", null: false
+    t.index ["blog_id", "slug"], name: "index_leaves_on_blog_id_and_slug", unique: true
     t.index ["blog_id"], name: "index_leaves_on_blog_id"
     t.index ["leafable_type", "leafable_id"], name: "index_leafs_on_leafable"
   end

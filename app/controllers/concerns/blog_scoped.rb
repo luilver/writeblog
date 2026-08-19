@@ -5,7 +5,11 @@ module BlogScoped extend ActiveSupport::Concern
 
   private
     def set_blog
-      @blog = Blog.accessable_or_published.find(params[:blog_id])
+      if params[:blog_slug]
+        @blog = Blog.accessable_or_published.find_by!(slug: params[:blog_slug])
+      else
+        @blog = Blog.accessable_or_published.find(params[:blog_id])
+      end
     end
 
     def ensure_editable

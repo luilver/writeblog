@@ -9,7 +9,16 @@ class Leaf < ApplicationRecord
 
   scope :with_leafables, -> { includes(:leafable) }
 
-  def slug
-    title.parameterize.presence || "-"
+  before_save :generate_slug, if: -> { slug.blank? || title_changed? }
+
+  def generate_slug
+    base_slug = title.to_s.parameterize.presence || "-"
+    candidate = base_slug
+    counter = 2
+    while blog.leaves.where(slug: candidate).where.not(id: id).exists?
+      candidate = "#{base_slug}-#{counter}"
+      counter += 1
+    end
+    self.slug = candidate
   end
 end

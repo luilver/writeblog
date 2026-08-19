@@ -8,11 +8,19 @@ module SetBlogLeaf
 
   private
     def set_blog
-      @blog = Blog.accessable_or_published.find(params[:blog_id])
+      if params[:blog_slug]
+        @blog = Blog.accessable_or_published.find_by!(slug: params[:blog_slug])
+      else
+        @blog = Blog.accessable_or_published.find(params[:blog_id])
+      end
     end
 
     def set_leaf
-      @leaf = @blog.leaves.active.find(params[:id])
+      if params[:leafable_slug]
+        @leaf = @blog.leaves.active.find_by!(slug: params[:leafable_slug])
+      else
+        @leaf = @blog.leaves.active.find(params[:id])
+      end
     end
 
     def set_leafable

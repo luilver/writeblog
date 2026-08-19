@@ -34,17 +34,6 @@ Rails.application.routes.draw do
     resources :pages
   end
 
-  get "/:id/:slug", to: "blogs#show", constraints: { id: /\d+/ }, as: :slugged_blog
-  get "/:blog_id/:blog_slug/:id/:slug", to: "leafables#show", constraints: { blog_id: /\d+/, id: /\d+/ }, as: :slugged_leafable
-
-  direct :blog_slug do |blog, options|
-    route_for :slugged_blog, blog, blog.slug, options
-  end
-
-  direct :leafable_slug do |leaf, options|
-    route_for :slugged_leafable, leaf.blog, leaf.blog.slug, leaf, leaf.slug, options
-  end
-
   resources :pages, only: [] do
     scope module: "pages" do
       resources :edits, only: :show
@@ -58,14 +47,6 @@ Rails.application.routes.draw do
     end
   end
 
-  direct :leafable do |leaf, options|
-    route_for "blog_#{leaf.leafable_name}", leaf.blog, leaf, options
-  end
-
-  direct :edit_leafable do |leaf, options|
-    route_for "edit_blog_#{leaf.leafable_name}", leaf.blog, leaf, options
-  end
-
   namespace :action_text, path: nil do
     get "/u/*slug" => "markdown/uploads#show", as: :markdown_upload
     post "/uploads" => "markdown/uploads#create", as: :markdown_uploads
@@ -74,4 +55,28 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
+
+  # Legacy ID-based routes → 301 redirect to slug-only URLs
+  get "/:id/:slug", to: redirect("/%{slug}"), constraints: { id: /\d+/ }
+  get "/:blog_id/:blog_slug/:id/:slug", to: redirect("/%{blog_slug}/%{slug}"), constraints: { blog_id: /\d+/, id: /\d+/ }
+
+  # Slug-only routes (public-facing, no IDs exposed)
+  get "/:blog_slug", to: "blogs#show", as: :slugged_blog
+  get "/:blog_slug/:leafable_slug", to: "leafables#show", as: :slugged_leafable
+
+  direct :blog_slug do |blog, options|
+    route_for :slugged_blog, blog.slug, options
+  end
+
+  direct :leafable_slug do |leaf, options|
+    route_for :slugged_leafable, leaf.blog.slug, leaf.slug, options
+  end
+
+  direct :leafable do |leaf, options|
+    route_for "blog_#{leaf.leafable_name}", leaf.blog, leaf, options
+  end
+
+  direct :edit_leafable do |leaf, options|
+    route_for "edit_blog_#{leaf.leafable_name}", leaf.blog, leaf, options
+  end
 end
