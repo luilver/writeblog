@@ -3,7 +3,7 @@ class PagesController < LeafablesController
 
   private
     def forget_reading_progress
-      cookies.delete "reading_progress_#{@book.id}"
+      cookies.delete "reading_progress_#{@blog.id}"
     end
 
     def default_leaf_params
