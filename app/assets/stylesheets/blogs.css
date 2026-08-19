@@ -196,6 +196,47 @@
   z-index: 1;
 }
 
+/* Blog styles */
+.blog__sidebar {
+  position: relative;
+  z-index: 1;
+}
+
+.blog__cover {
+  block-size: auto;
+  max-block-size: 200px;
+  object-fit: contain;
+  width: 100%;
+}
+
+.blog__cover-wrapper {
+  display: inline-grid;
+  max-inline-size: 200px;
+  position: relative;
+
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+.blog__title {
+  font-weight: 750;
+}
+
+.blog__toolbar {
+  inset-block-start: 0;
+  z-index: 1;
+}
+
+.blog__nav {
+  font-size: var(--font-medium-responsive);
+  margin: var(--block-space-double) auto var(--block-space);
+
+  .btn {
+    max-inline-size: 50ch;
+  }
+}
+
 /* Bookmarks */
 .bookmark {
   --icon-size: 1.5em;

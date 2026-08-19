@@ -47,16 +47,16 @@
 <% end %>
 
 <% cache [ @blog, @blog.editable? ] do %>
-  <aside class="txt-align-center margin-block">
+  <aside class="txt-align-center margin-block-end-half">
     <div class="blog__sidebar <%= "theme--#{@blog&.theme}" unless @blog.cover.attached? %>">
       <% if @blog.cover.attached? %>
         <%= link_to rails_blob_path(@blog.cover, disposition: "attachment", only_path: true), data: { action: "lightbox#open:prevent", lightbox_target: "image", lightbox_url_value: rails_blob_path(@blog.cover, disposition: "attachment", only_path: true) } do %>
-          <%= image_tag @blog.cover, alt: "Cover for #{ @blog.title }", class: "blog__cover margin-block-none center" %>
+          <%= image_tag @blog.cover, alt: "Cover for #{ @blog.title }", class: "blog__cover" %>
         <% end %>
       <% else %>
         <span class="blog__cover-wrapper">
-          <%= image_tag "empty-cover.png", alt: "Blog cover", class: "blog__cover margin-block-none center" %>
-          <span class="blog__title overflow-line-clamp pad txt-align-start txt-tight-lines"" style="--lines: 6" aria-hidden="true"><%= @blog.title %></span>
+          <%= image_tag "empty-cover.png", alt: "Blog cover", class: "blog__cover" %>
+          <span class="blog__title overflow-line-clamp pad txt-align-start txt-tight-lines" style="--lines: 6" aria-hidden="true"><%= @blog.title %></span>
         </span>
       <% end %>
 
@@ -65,19 +65,17 @@
           <%= render "blogs/publications/publication", blog: @blog %>
         <% end %>
       <% end %>
-
-      <span data-controller="edit-mode" data-edit-mode-editing-class="edit-mode" />
     </div>
   </aside>
 
   <%= arrangement_tag @blog, class: "arrangement__container toc__container full-width txt-align-center" do %>
-    <h1 class="flex flex-column txt-tight-lines txt-align-start margin-block-end">
+    <h1 class="flex flex-column txt-tight-lines txt-align-start margin-block-end-half">
       <strong class="blog__title txt-x-large--responsive"><%= @blog.title %></strong>
       <span class="txt-large--responsive txt-normal"><%= @blog.subtitle %></span>
       <span class="txt-large--responsive txt-normal"><%= @blog.author %></span>
     </h1>
 
-    <div class="blog__toolbar fill-white flex gap-half pad-block margin-block-end-half justify-center <%= "position-sticky" if @blog.editable? %>" data-controller="toc-view" data-toc-view-id-value="<%= dom_id(@blog) %>">
+    <div class="blog__toolbar fill-white flex gap-half justify-center <%= "position-sticky" if @blog.editable? %>" data-controller="toc-view" data-toc-view-id-value="<%= dom_id(@blog) %>">
       <label class="btn txt-medium disable-when-empty">
         <input type="radio" name="view" id="toc-list" value="list" data-toc-view-target="switch" data-toc-view-type-value="list" data-action="toc-view#saveViewPref">
         <%= image_tag "view-list.svg", aria: { hidden: true }, size: 24 %>
