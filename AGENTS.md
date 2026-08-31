@@ -164,4 +164,4 @@
 - Update AGENTS.md whenever security posture, headers, or env vars change so future agents stay aligned.
 ## Production Deployment
 - Deployment, host, and access details are intentionally not tracked in this
-  public repository; they live locally at `a local-only directory on the owner's machine`.
+  public repository; they live in a local-only directory on the owner's machine.

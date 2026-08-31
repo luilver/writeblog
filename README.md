@@ -31,7 +31,6 @@ browser ──HTTPS──> edge ──> web
 git pull
 bin/rails db:prepare RAILS_ENV=production
 SECRET_KEY_BASE_DUMMY=1 bin/rails assets:precompile
-
 ```
 
 ## Security notes
