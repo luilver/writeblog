@@ -163,19 +163,5 @@
 - Session cookies live in cookies.signed.permanent[:session_token] (same_site: :lax); call reset_authentication whenever sessions are revoked.
 - Update AGENTS.md whenever security posture, headers, or env vars change so future agents stay aligned.
 ## Production Deployment
-- Production runs on [HOST_TYPE_REDACTED] [CONTAINER_REDACTED] **122** (`writeblog`), IP `[LAN_IP_REDACTED]`, Ubuntu 24.04.
-- Public URL: `https://blog.luilver.com` via [TUNNEL_GATEWAY_REDACTED] + Access ([AUTH_REDACTED]).
-- LAN URL: `http://[LAN_IP_REDACTED]/` (no auth, plain HTTP).
-- Full provisioning: `docs/DEPLOYMENT.md`. Cloudflare setup: `docs/CLOUDFLARE.md`.
-- Three systemd services: `[SERVICE_REDACTED]` (Puma+Thruster), `[SERVICE_REDACTED]`, `[SERVICE_REDACTED]` (Resque).
-- Process management uses `bin/boot` locally; systemd units on the CT mirror the Procfile.
-- Environment file at `[APP_PATH_REDACTED]/[ENV_FILE_REDACTED]` holds `SECRET_KEY_BASE`, `REDIS_URL`, `DISABLE_SSL=1`.
-- `DISABLE_SSL=1` is set because Cloudflare handles TLS at the edge; never remove it in production.
-- Deploy key: `~/.ssh/[DEPLOY_KEY_REDACTED]` (unencrypted, non-interactive SSH to [CONTAINER_REF_REDACTED]).
-- Deploy workflow: `git pull` on [CONTAINER_REF_REDACTED] → `bin/rails db:prepare` → `assets:precompile` → `systemctl restart`.
-- SQLite database lives at `[APP_PATH_REDACTED]/storage/db/production.sqlite3`; back up with `script/admin/prepare-backup`.
-- Redis runs on port 6379, persistence disabled (`config/redis.conf`), used for cache/cable/queue.
-- Health check: `curl -s http://[LAN_IP_REDACTED]/up` should return 200.
-- [TUNNEL_GATEWAY_REDACTED] ID: `[TUNNEL_ID_REDACTED]` (shared with `[INTERNAL_REF_REDACTED]`).
-- [AUTH_GATEWAY_REDACTED] app protects `blog.luilver.com` with [AUTH_REDACTED] for 4 identities.
-- Provisioning uses `auto_devops` (`[LOCAL_DIR_REDACTED]auto_devops`): `[HOST_TYPE_REDACTED]-cli new vm writeblog --ip [LAN_IP_REDACTED] --skip-dns`.
+- Deployment, host, and access details are intentionally not tracked in this
+  public repository; they live locally at `a local-only directory on the owner's machine`.
