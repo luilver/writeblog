@@ -277,7 +277,7 @@ GEM
       rake (>= 10.0, < 14.0)
       resque (>= 1.22, < 3)
     rexml (3.4.1)
-    rouge (4.3.0)
+    rouge (4.7.0)
     rqrcode (2.2.0)
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
