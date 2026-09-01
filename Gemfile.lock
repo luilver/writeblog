@@ -222,9 +222,10 @@ GEM
       actionpack (>= 7.0.0)
       activesupport (>= 7.0.0)
       rack
-    pry (0.14.2)
+    pry (0.16.0)
       coderay (~> 1.1)
       method_source (~> 1.0)
+      reline (>= 0.6.0)
     public_suffix (5.0.5)
     puma (6.4.2)
       nio4r (~> 2.0)
